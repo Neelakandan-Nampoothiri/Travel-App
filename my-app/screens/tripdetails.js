@@ -1,0 +1,364 @@
+import { Feather } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { Picker } from "@react-native-picker/picker";
+import { BlurView } from "expo-blur";
+import { LinearGradient } from "expo-linear-gradient";
+import { useState } from "react";
+import {
+  Image, Modal, Platform, ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from "react-native";
+
+export default function App({ navigation }) {
+  const [owner, setOwner] = useState("");
+  const [customerName, setCustomerName] = useState("");
+  const [mobile, setMobile] = useState("");
+  const [address, setAddress] = useState("");
+  const [fromLocation, setFromLocation] = useState("");
+  const [toLocation, setToLocation] = useState("");
+  const [showBeginDatePicker, setShowBeginDatePicker] = useState(false);
+  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
+  const [tripBeginDate, setTripBeginDate] = useState(null);
+  const [tripEndDate, setTripEndDate] = useState(null);
+  const [showBookingDialog, setShowBookingDialog] = useState(false);
+
+  // Remove validation for UI testing
+  const handleConfirm = () => {
+    setShowBookingDialog(true);
+  };
+
+  return (
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
+
+      {/* Header */}
+      <LinearGradient
+        colors={["#D15C2D", "#6B2F17"]}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+        style={styles.header}
+      >
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Feather name="chevron-left" size={26} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Trip Details</Text>
+      </LinearGradient>
+
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Owner */}
+        <Text style={styles.label}>Owner Name</Text>
+        <View style={styles.inputBox}>
+          <Picker
+            selectedValue={owner}
+            onValueChange={(itemValue) => setOwner(itemValue)}
+            dropdownIconColor="#D15C2D"
+          >
+            <Picker.Item label="Select Owner" value="" />
+            <Picker.Item label="Owner 1" value="owner1" />
+            <Picker.Item label="Owner 2" value="owner2" />
+            <Picker.Item label="Owner 3" value="owner3" />
+          </Picker>
+        </View>
+
+        {/* Customer */}
+        <Text style={styles.label}>Customer Name</Text>
+        <TextInput
+          placeholder="Enter Customer Name"
+          placeholderTextColor="#B99688"
+          style={styles.input}
+          value={customerName}
+          onChangeText={setCustomerName}
+        />
+
+        {/* Mobile */}
+        <Text style={styles.label}>Mobile Number</Text>
+        <View style={styles.mobileContainer}>
+          <Text style={styles.countryCode}>+91</Text>
+          <TextInput
+            placeholder="Enter Mobile Number"
+            placeholderTextColor="#B99688"
+            style={styles.mobileInput}
+            keyboardType="number-pad"
+            value={mobile}
+            onChangeText={(text) => {
+              if (/^\d*$/.test(text) && text.length <= 10) {
+                setMobile(text);
+              }
+            }}
+          />
+        </View>
+
+        {/* Address */}
+        <Text style={styles.label}>Address</Text>
+        <TextInput
+          placeholder="Enter Pickup Address"
+          placeholderTextColor="#B99688"
+          style={[styles.input, { height: 90, textAlignVertical: "top" }]}
+          multiline
+          value={address}
+          onChangeText={setAddress}
+        />
+
+        {/* Trip */}
+        <Text style={styles.label}>Trip</Text>
+        <View style={styles.tripRow}>
+          <TextInput
+            placeholder="From"
+            placeholderTextColor="#B99688"
+            style={styles.tripInput}
+            value={fromLocation}
+            onChangeText={setFromLocation}
+          />
+          <Feather name="repeat" size={22} color="#D15C2D" />
+          <TextInput
+            placeholder="To"
+            placeholderTextColor="#B99688"
+            style={styles.tripInput}
+            value={toLocation}
+            onChangeText={setToLocation}
+          />
+        </View>
+
+        {/* Begin Date */}
+        <Text style={styles.label}>Trip Beginning</Text>
+        <TouchableOpacity
+          style={styles.dateBox}
+          onPress={() => setShowBeginDatePicker(true)}
+        >
+          <Feather name="calendar" size={20} color="#444" />
+          <Text style={styles.dateText}>
+            {tripBeginDate
+              ? tripBeginDate.toLocaleDateString() +
+                " " +
+                tripBeginDate.toLocaleTimeString()
+              : "Select Date And Time"}
+          </Text>
+        </TouchableOpacity>
+
+        {showBeginDatePicker && Platform.OS !== "web" && (
+          <DateTimePicker
+            value={tripBeginDate || new Date()}
+            mode="datetime"
+            onChange={(event, selectedDate) => {
+              setShowBeginDatePicker(false);
+              if (selectedDate) {
+                setTripBeginDate(selectedDate);
+              }
+            }}
+          />
+        )}
+
+        {/* End Date */}
+        <Text style={styles.label}>Trip End</Text>
+        <TouchableOpacity
+          style={styles.dateBox}
+          onPress={() => setShowEndDatePicker(true)}
+        >
+          <Feather name="calendar" size={20} color="#444" />
+          <Text style={styles.dateText}>
+            {tripEndDate
+              ? tripEndDate.toLocaleDateString() +
+                " " +
+                tripEndDate.toLocaleTimeString()
+              : "Select Date And Time"}
+          </Text>
+        </TouchableOpacity>
+
+        {showEndDatePicker && Platform.OS !== "web" && (
+          <DateTimePicker
+            value={tripEndDate || new Date()}
+            mode="datetime"
+            onChange={(event, selectedDate) => {
+              setShowEndDatePicker(false);
+              if (selectedDate) {
+                setTripEndDate(selectedDate);
+              }
+            }}
+          />
+        )}
+
+        {/* Confirm Button */}
+        <TouchableOpacity style={styles.buttonWrapper} onPress={handleConfirm}>
+          <LinearGradient
+            colors={["#6B2F17", "#D15C2D"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.button}
+          >
+            <Text style={styles.buttonText}>Confirm Booking</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+      </ScrollView>
+
+      {/* Modal */}
+      <Modal
+        visible={showBookingDialog}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowBookingDialog(false)}
+      >
+        <View style={styles.modalContainer}>
+          <BlurView intensity={100} tint="dark" style={styles.modalBlur} />
+          <View style={styles.dialogBox}>
+            <View style={styles.tickCircle}>
+              <Image
+                source={require("../assets/check.png")}
+                style={styles.checkImage}
+              />
+            </View>
+            <Text style={styles.confirmedText}>Booking Confirmed</Text>
+            <TouchableOpacity
+              style={{ width: "100%" }}
+              onPress={() => {
+                setShowBookingDialog(false);
+                navigation.navigate("OwnerHomeScreen");
+              }}
+            >
+              <LinearGradient
+                colors={["#6B2F17", "#D15C2D"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.button}
+              >
+                <Text style={styles.buttonText}>Go to Home Page</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#FFFFF9" },
+
+  header: {
+    paddingTop: 55,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  headerTitle: {
+    color: "#fff",
+    fontSize: 22,
+    fontWeight: "600",
+    marginLeft: 10,
+  },
+
+  label: {
+    fontSize: 18,
+    fontWeight: "500",
+    marginTop: 20,
+    marginHorizontal: 20,
+  },
+
+  input: {
+    backgroundColor: "#FBF6E9",
+    marginHorizontal: 20,
+    marginTop: 10,
+    borderRadius: 15,
+    paddingHorizontal: 15,
+    paddingVertical: 14,
+    fontSize: 16,
+  },
+
+  inputBox: {
+    backgroundColor: "#FBF6E9",
+    marginHorizontal: 20,
+    marginTop: 10,
+    borderRadius: 15,
+    overflow: "hidden",
+  },
+
+  mobileContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FBF6E9",
+    marginHorizontal: 20,
+    marginTop: 10,
+    borderRadius: 15,
+    paddingHorizontal: 15,
+  },
+
+  countryCode: { fontSize: 16, marginRight: 10 },
+
+  mobileInput: { flex: 1, fontSize: 16, paddingVertical: 14 },
+
+  tripRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginHorizontal: 20,
+    marginTop: 10,
+  },
+
+  tripInput: {
+    backgroundColor: "#FBF6E9",
+    borderRadius: 15,
+    paddingHorizontal: 15,
+    paddingVertical: 14,
+    width: "42%",
+  },
+
+  dateBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FBF6E9",
+    marginHorizontal: 20,
+    marginTop: 10,
+    borderRadius: 15,
+    paddingHorizontal: 15,
+    paddingVertical: 16,
+  },
+
+  dateText: { marginLeft: 10, fontSize: 16, color: "#B08974" },
+
+  buttonWrapper: { marginHorizontal: 20, marginVertical: 30 },
+
+  button: {
+    borderRadius: 19,
+    paddingVertical: 16,
+    alignItems: "center",
+  },
+
+  buttonText: { color: "#fff", fontSize: 18, fontWeight: "600" },
+
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  modalBlur: { ...StyleSheet.absoluteFillObject },
+
+  dialogBox: {
+    width: "80%",
+    backgroundColor: "#F9F7F2",
+    borderRadius: 40,
+    alignItems: "center",
+    padding: 24,
+    elevation: 8,
+  },
+
+
+
+  checkImage: { width: 84, height: 84, top: -66 },
+
+  confirmedText: {
+    fontSize: 26,
+    fontWeight: "bold",
+    marginTop:-34,
+    paddingBottom: 16,
+    marginBottom: 24,
+  },
+});
