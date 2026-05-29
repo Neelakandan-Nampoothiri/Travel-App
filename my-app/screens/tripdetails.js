@@ -1,5 +1,5 @@
 import { Feather } from "@expo/vector-icons";
-import DateTimePicker from "@react-native-community/datetimepicker";
+import DateTimePicker, { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
@@ -30,6 +30,37 @@ export default function App({ navigation }) {
   // Remove validation for UI testing
   const handleConfirm = () => {
     setShowBookingDialog(true);
+  };
+
+  const showAndroidDateTimePicker = (type) => {
+    DateTimePickerAndroid.open({
+      value: (type === "begin" ? tripBeginDate : tripEndDate) || new Date(),
+      mode: "date",
+      onChange: (event, selectedDate) => {
+        if (event.type === "set" && selectedDate) {
+          DateTimePickerAndroid.open({
+            value: selectedDate,
+            mode: "time",
+            onChange: (timeEvent, selectedTime) => {
+              if (timeEvent.type === "set" && selectedTime) {
+                const combinedDate = new Date(
+                  selectedDate.getFullYear(),
+                  selectedDate.getMonth(),
+                  selectedDate.getDate(),
+                  selectedTime.getHours(),
+                  selectedTime.getMinutes()
+                );
+                if (type === "begin") {
+                  setTripBeginDate(combinedDate);
+                } else {
+                  setTripEndDate(combinedDate);
+                }
+              }
+            },
+          });
+        }
+      },
+    });
   };
 
   return (
@@ -128,7 +159,13 @@ export default function App({ navigation }) {
         <Text style={styles.label}>Trip Beginning</Text>
         <TouchableOpacity
           style={styles.dateBox}
-          onPress={() => setShowBeginDatePicker(true)}
+          onPress={() => {
+            if (Platform.OS === "android") {
+              showAndroidDateTimePicker("begin");
+            } else {
+              setShowBeginDatePicker(true);
+            }
+          }}
         >
           <Feather name="calendar" size={20} color="#444" />
           <Text style={styles.dateText}>
@@ -140,7 +177,7 @@ export default function App({ navigation }) {
           </Text>
         </TouchableOpacity>
 
-        {showBeginDatePicker && Platform.OS !== "web" && (
+        {showBeginDatePicker && Platform.OS === "ios" && (
           <DateTimePicker
             value={tripBeginDate || new Date()}
             mode="datetime"
@@ -157,7 +194,13 @@ export default function App({ navigation }) {
         <Text style={styles.label}>Trip End</Text>
         <TouchableOpacity
           style={styles.dateBox}
-          onPress={() => setShowEndDatePicker(true)}
+          onPress={() => {
+            if (Platform.OS === "android") {
+              showAndroidDateTimePicker("end");
+            } else {
+              setShowEndDatePicker(true);
+            }
+          }}
         >
           <Feather name="calendar" size={20} color="#444" />
           <Text style={styles.dateText}>
@@ -169,7 +212,7 @@ export default function App({ navigation }) {
           </Text>
         </TouchableOpacity>
 
-        {showEndDatePicker && Platform.OS !== "web" && (
+        {showEndDatePicker && Platform.OS === "ios" && (
           <DateTimePicker
             value={tripEndDate || new Date()}
             mode="datetime"

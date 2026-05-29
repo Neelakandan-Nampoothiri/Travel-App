@@ -1,35 +1,64 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Feather } from "@expo/vector-icons";
+import {
+  createBottomTabNavigator
+} from "@react-navigation/bottom-tabs";
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+const Tab = createBottomTabNavigator();
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const tintColor = Colors[colorScheme ?? "light"].tint;
+  const tabBarActiveTintColor = tintColor;
+  const tabBarInactiveTintColor = Colors[colorScheme ?? "light"].tabIconDefault;
+  const tabBarBackgroundColor = Colors[colorScheme ?? "light"].background;
 
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarActiveTintColor,
+        tabBarInactiveTintColor,
+        tabBarStyle: {
+          backgroundColor: tabBarBackgroundColor,
+          borderTopColor: Colors[colorScheme ?? "light"].border,
+        },
         headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
-      <Tabs.Screen
+        tabBarIcon: ({ color, focused }) => {
+          let iconName: keyof typeof Feather.glyphMap;
+
+          if (route.name === "index") {
+            iconName = focused ? "map-pin" : "map-pin";
+          } else if (route.name === "home") {
+            iconName = focused ? "home" : "home";
+          } else if (route.name === "explore") {
+            iconName = focused ? "compass" : "compass";
+          } else {
+            iconName = "circle";
+          }
+
+          return <Feather name={iconName} size={28} color={color} />;
+        },
+      })}
+    >
+      <Tab.Screen
+        name="home"
+        options={{
+          title: "Home",
+        }}
+      />
+      <Tab.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: "Trip Details",
         }}
       />
-      <Tabs.Screen
+      <Tab.Screen
         name="explore"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: "Explore",
         }}
       />
-    </Tabs>
+    </Tab.Navigator>
   );
 }

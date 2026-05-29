@@ -42,9 +42,9 @@ export default function TripDetailsScreen() {
           <Picker
             selectedValue={owner}
             onValueChange={(itemValue) => setOwner(itemValue)}
-            dropdownIconColor="#D15C2D"
+            dropdownIconColor="#A34823"
           >
-            <Picker.Item label="Select Owner" value="" />
+            <Picker.Item label="" value="" />
             <Picker.Item label="Owner 1" value="owner1" />
             <Picker.Item label="Owner 2" value="owner2" />
             <Picker.Item label="Owner 3" value="owner3" />
@@ -77,12 +77,17 @@ export default function TripDetailsScreen() {
           />
         </View>
 
-        {/* Address */}
-        <Text style={styles.label}>Address</Text>
         <TextInput
           placeholder="Enter Pickup Address"
           placeholderTextColor="#B99688"
-          style={[styles.input, { height: 90 }]}
+          style={[
+            styles.input,
+            {
+              height: 90,
+              textAlign: "right",
+              textAlignVertical: "top",
+            },
+          ]}
           multiline
           value={address}
           onChangeText={setAddress}
@@ -223,7 +228,7 @@ const styles = StyleSheet.create({
   dateBox: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FBF6E9",
+    backgroundColor: "#1b1400",
     marginHorizontal: 20,
     marginTop: 10,
     borderRadius: 15,

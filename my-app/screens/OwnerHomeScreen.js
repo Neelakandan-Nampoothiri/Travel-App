@@ -6,7 +6,9 @@ import {
   Image,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
+
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { useFonts } from "expo-font";
@@ -30,12 +32,24 @@ const VEHICLES = [
 ];
 
 export default function HomeScreen({ navigation }) {
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     "Serpentine-Bold": require("../assets/Serpentine-Bold.ttf"),
   });
 
-  if (!fontsLoaded) {
-    return null;
+  React.useEffect(() => {
+    console.log("Fonts Loaded:", fontsLoaded);
+    console.log("Font Error:", fontError);
+  }, [fontsLoaded, fontError]);
+
+  if (!fontsLoaded && !fontError) {
+    return (
+      <View style={styles.loader}>
+        <ActivityIndicator size="large" color="#fff" />
+        <Text style={{ color: "#fff", marginTop: 10 }}>
+          Loading Fonts...
+        </Text>
+      </View>
+    );
   }
 
   return (
@@ -47,7 +61,7 @@ export default function HomeScreen({ navigation }) {
         contentContainerStyle={{ paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.greeting}>Hi, Owner !</Text>
+        <Text style={styles.greeting}>HI, OWNER !</Text>
 
         <View style={styles.logoCircleWrapper}>
           <Image
@@ -63,20 +77,20 @@ export default function HomeScreen({ navigation }) {
           {VEHICLES.map((vehicle) => (
             <View key={vehicle.id} style={styles.cardOuterShadow}>
               <View style={styles.vehicleCard}>
-                {/* LEFT SIDE */}
                 <View style={styles.vehicleCardLeft}>
-                  {vehicle.title.match(/^\d+ seater$/i) ? (
+                  {vehicle.title.match(/^\d+[\s-]seater$/i) ? (
                     <>
                       <Text style={styles.vehicleTitleNum}>
-                        {vehicle.title.split(" ")[0]}
+                        {vehicle.title.split(/[\s-]+/)[0].toUpperCase()}
                       </Text>
+
                       <Text style={styles.vehicleTitleText}>
-                        {vehicle.title.split(" ")[1]}
+                        {vehicle.title.split(/[\s-]+/)[1].toUpperCase()}
                       </Text>
                     </>
                   ) : (
                     <Text style={styles.vehicleTitleText}>
-                      {vehicle.title}
+                      {vehicle.title.toUpperCase()}
                     </Text>
                   )}
 
@@ -98,7 +112,6 @@ export default function HomeScreen({ navigation }) {
                   </TouchableOpacity>
                 </View>
 
-                {/* RIGHT SIDE IMAGE */}
                 <Image
                   source={vehicle.image}
                   style={styles.vehicleImage}
@@ -116,6 +129,13 @@ export default function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+
+  loader: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#6B2F17",
   },
 
   greeting: {
@@ -157,10 +177,9 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between", // 🔥 pushes image fully right
+    justifyContent: "space-between",
     height: 150,
     paddingLeft: 22,
-    
   },
 
   vehicleCardLeft: {
