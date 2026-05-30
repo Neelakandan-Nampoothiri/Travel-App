@@ -1,3 +1,0 @@
-0000000000000000000000000000000000000000 c0ca1d6bfc9a5912574d10c1ebb700a044e42269 trilo <trilo@example.com> 1780135733 +0530	commit (initial): Initial commit: add project files
-c0ca1d6bfc9a5912574d10c1ebb700a044e42269 c0ca1d6bfc9a5912574d10c1ebb700a044e42269 trilo <trilo@example.com> 1780135733 +0530	Branch: renamed refs/heads/master to refs/heads/main
-c0ca1d6bfc9a5912574d10c1ebb700a044e42269 ba6c49352412d78d484e9912024e329c1a468aec trilo <trilo@example.com> 1780135780 +0530	pull --rebase origin main (finish): refs/heads/main onto 8581a66dbdeba2b2b669194cb4d3fc69931f1b82
