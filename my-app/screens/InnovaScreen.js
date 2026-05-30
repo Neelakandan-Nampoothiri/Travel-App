@@ -1,14 +1,13 @@
-import React, { useState, useMemo } from "react";
+import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { useMemo } from "react";
 import {
-  View,
+  ScrollView,
+  StyleSheet,
   Text,
   TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Alert,
+  View
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { Feather } from "@expo/vector-icons";
 import { Calendar } from "react-native-calendars";
 
 const BOOKED_DATES = [
@@ -20,26 +19,20 @@ const BOOKED_DATES = [
 ];
 
 export default function InnovaScreen({ navigation }) {
-  const [selectedDate, setSelectedDate] = useState(null);
-
   const markedDates = useMemo(() => {
-    const marks = {};
-    BOOKED_DATES.forEach((item) => {
-      marks[item.date] = {
-        marked: true,
-        dotColor: "#B45A2B",
-        activeOpacity: 1,
-      };
-    });
-    if (selectedDate) {
-      marks[selectedDate] = {
-        selected: true,
-        selectedColor: "#D15C2D",
-      };
-    }
-    return marks;
-  }, [selectedDate]);
+  const marks = {};
 
+  BOOKED_DATES.forEach((item) => {
+    marks[item.date] = {
+      selected: true,
+      selectedColor: "#B45A2B",
+      selectedTextColor: "#FFFFFF",
+      disableTouchEvent: true,
+    };
+  });
+
+  return marks;
+}, []);
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -53,23 +46,34 @@ export default function InnovaScreen({ navigation }) {
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
         {/* Calendar */}
         <View style={styles.calendarWrapper}>
-          <Calendar
-            current={"2026-01-01"}
-            minDate={"2026-01-01"}
-            maxDate={"2026-01-31"}
-            markedDates={markedDates}
-            onDayPress={(day) => setSelectedDate(day.dateString)}
-            theme={{
-                paddingTop: 90,
-              backgroundColor: "#F8F1E6",
-              calendarBackground: "#F8F1E6",
-              dayTextColor: "#6B2F17",
-              todayTextColor: "#D15C2D",
-              monthTextColor: "#6B2F17",
-              arrowColor: "#B08974",
-            }}
-            style={{ borderRadius: 24 }}
-          />
+   <Calendar
+  current={"2026-01-01"}
+  minDate={"2026-01-01"}
+  maxDate={"2026-01-31"}
+  markedDates={markedDates}
+
+  enableSwipeMonths={true}
+  hideExtraDays={false}
+
+  theme={{
+    backgroundColor: "#F8F1E6",
+    calendarBackground: "#F8F1E6",
+
+    dayTextColor: "#6B2F17",
+    textDisabledColor: "#6B2F17",
+
+    todayTextColor: "#D15C2D",
+    monthTextColor: "#6B2F17",
+    arrowColor: "#B08974",
+
+    selectedDayBackgroundColor: "#B45A2B",
+    selectedDayTextColor: "#FFFFFF",
+  }}
+
+  style={{
+    borderRadius: 24,
+  }}
+/>
         </View>
 
         <Text style={styles.bookedTitle}>Booked Dates</Text>
@@ -95,18 +99,14 @@ export default function InnovaScreen({ navigation }) {
       <View style={styles.sticky}>
         <TouchableOpacity
           onPress={() => {
-            if (!selectedDate) {
-              Alert.alert("Select a date first");
-              return;
-            }
-                navigation.navigate("TripDetails", { date: selectedDate });
+            navigation.navigate("TripDetails");
           }}
         >
           <LinearGradient
             colors={["#6B2F17", "#D15C2D"]}
             style={styles.bookNow}
-              start={{ x: 0, y: 0 }}
-  end={{ x: 1, y: 0 }}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
           >
             <Text style={styles.bookNowText}>Book Now</Text>
           </LinearGradient>
@@ -117,7 +117,7 @@ export default function InnovaScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FFF9F3" , paddingBottom:25,},
+  container: { flex: 1, backgroundColor: "#FFF9F3", paddingBottom: 25 },
 
   header: {
     flexDirection: "row",
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
   bookNow: {
     borderRadius: 16,
     height: 56,
-    
+
     justifyContent: "center",
     alignItems: "center",
   },

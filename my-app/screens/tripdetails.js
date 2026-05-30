@@ -1,17 +1,23 @@
 import { Feather } from "@expo/vector-icons";
-import DateTimePicker, { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
+import DateTimePicker, {
+    DateTimePickerAndroid,
+} from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import {
-  Image, Modal, Platform, ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Alert,
+    Image,
+    Modal,
+    Platform,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 export default function App({ navigation }) {
@@ -27,8 +33,41 @@ export default function App({ navigation }) {
   const [tripEndDate, setTripEndDate] = useState(null);
   const [showBookingDialog, setShowBookingDialog] = useState(false);
 
-  // Remove validation for UI testing
   const handleConfirm = () => {
+    // Validate all fields
+    if (!owner.trim()) {
+      Alert.alert("Required", "Please select an owner");
+      return;
+    }
+    if (!customerName.trim()) {
+      Alert.alert("Required", "Please enter customer name");
+      return;
+    }
+    if (!mobile.trim() || mobile.length !== 10) {
+      Alert.alert("Required", "Please enter a valid 10-digit mobile number");
+      return;
+    }
+    if (!address.trim()) {
+      Alert.alert("Required", "Please enter pickup address");
+      return;
+    }
+    if (!fromLocation.trim()) {
+      Alert.alert("Required", "Please enter 'From' location");
+      return;
+    }
+    if (!toLocation.trim()) {
+      Alert.alert("Required", "Please enter 'To' location");
+      return;
+    }
+    if (!tripBeginDate) {
+      Alert.alert("Required", "Please select trip beginning date and time");
+      return;
+    }
+    if (!tripEndDate) {
+      Alert.alert("Required", "Please select trip end date and time");
+      return;
+    }
+
     setShowBookingDialog(true);
   };
 
@@ -48,7 +87,7 @@ export default function App({ navigation }) {
                   selectedDate.getMonth(),
                   selectedDate.getDate(),
                   selectedTime.getHours(),
-                  selectedTime.getMinutes()
+                  selectedTime.getMinutes(),
                 );
                 if (type === "begin") {
                   setTripBeginDate(combinedDate);
@@ -93,6 +132,7 @@ export default function App({ navigation }) {
             <Picker.Item label="Owner 1" value="owner1" />
             <Picker.Item label="Owner 2" value="owner2" />
             <Picker.Item label="Owner 3" value="owner3" />
+            <Picker.Item label="Owner 4" value="owner4" />
           </Picker>
         </View>
 
@@ -393,14 +433,12 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
 
-
-
   checkImage: { width: 84, height: 84, top: -66 },
 
   confirmedText: {
     fontSize: 26,
     fontWeight: "bold",
-    marginTop:-34,
+    marginTop: -34,
     paddingBottom: 16,
     marginBottom: 24,
   },
