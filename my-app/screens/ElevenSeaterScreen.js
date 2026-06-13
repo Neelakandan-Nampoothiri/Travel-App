@@ -1,7 +1,9 @@
 import { Feather } from "@expo/vector-icons";
+import { Picker } from "@react-native-picker/picker";
 import { LinearGradient } from "expo-linear-gradient";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
+    Modal,
     ScrollView,
     StyleSheet,
     Text,
@@ -18,7 +20,30 @@ const BOOKED_DATES = [
   { id: 5, date: "2026-01-28", label: "Thu, January 28", route: "KYKM - CHN" },
 ];
 
+const MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
 export default function ElevenSeaterScreen({ navigation }) {
+  const [selectedMonth, setSelectedMonth] = useState(0);
+  const [selectedYear, setSelectedYear] = useState(2026);
+  const [showPicker, setShowPicker] = useState(false);
+
+  const currentDate = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}-01`;
+  const minDateOfMonth = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}-01`;
+  const maxDateOfMonth = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}-${new Date(selectedYear, selectedMonth + 1, 0).getDate()}`;
+
   const markedDates = useMemo(() => {
     const marks = {};
 
@@ -43,16 +68,66 @@ export default function ElevenSeaterScreen({ navigation }) {
         <Text style={styles.headerTitle}>11 Seater</Text>
       </LinearGradient>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
+      <ScrollView
+        contentContainerStyle={{
+          paddingBottom: 180,
+        }}
+      >
         {/* Calendar */}
         <View style={styles.calendarWrapper}>
+          <View style={styles.monthYearHeaderContainer}>
+            <TouchableOpacity
+              style={styles.arrowButton}
+              onPress={() => {
+                let newMonth = selectedMonth - 1;
+                let newYear = selectedYear;
+                if (newMonth < 0) {
+                  newMonth = 11;
+                  newYear = selectedYear - 1;
+                }
+                setSelectedMonth(newMonth);
+                setSelectedYear(newYear);
+              }}
+            >
+              <Feather name="chevron-left" size={24} color="#D15C2D" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.monthYearOverlay}
+              onPress={() => setShowPicker(true)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.monthYearOverlayText}>
+                {MONTHS[selectedMonth]} {selectedYear}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.arrowButton}
+              onPress={() => {
+                let newMonth = selectedMonth + 1;
+                let newYear = selectedYear;
+                if (newMonth > 11) {
+                  newMonth = 0;
+                  newYear = selectedYear + 1;
+                }
+                setSelectedMonth(newMonth);
+                setSelectedYear(newYear);
+              }}
+            >
+              <Feather name="chevron-right" size={24} color="#D15C2D" />
+            </TouchableOpacity>
+          </View>
+
           <Calendar
-            current={"2026-01-01"}
-            minDate={"2026-01-01"}
-            maxDate={"2026-01-31"}
+            current={currentDate}
+            minDate={minDateOfMonth}
+            maxDate={maxDateOfMonth}
             markedDates={markedDates}
-            enableSwipeMonths={true}
+            enableSwipeMonths={false}
             hideExtraDays={false}
+            hideArrows={true}
+            renderHeader={() => null}
             theme={{
               backgroundColor: "#F8F1E6",
               calendarBackground: "#F8F1E6",
@@ -61,8 +136,6 @@ export default function ElevenSeaterScreen({ navigation }) {
               textDisabledColor: "#6B2F17",
 
               todayTextColor: "#D15C2D",
-              monthTextColor: "#6B2F17",
-              arrowColor: "#B08974",
 
               selectedDayBackgroundColor: "#B45A2B",
               selectedDayTextColor: "#FFFFFF",
@@ -91,6 +164,65 @@ export default function ElevenSeaterScreen({ navigation }) {
           </LinearGradient>
         ))}
       </ScrollView>
+
+      {/* Month/Year Picker Modal */}
+      <Modal
+        visible={showPicker}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowPicker(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Month & Year</Text>
+              <TouchableOpacity onPress={() => setShowPicker(false)}>
+                <Feather name="x" size={28} color="#6B2F17" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.pickerContainer}>
+              <View style={styles.pickerColumn}>
+                <Text style={styles.pickerLabel}>Month</Text>
+                <Picker
+                  selectedValue={selectedMonth}
+                  onValueChange={(itemValue) => setSelectedMonth(itemValue)}
+                  style={styles.picker}
+                >
+                  {MONTHS.map((month, index) => (
+                    <Picker.Item key={index} label={month} value={index} />
+                  ))}
+                </Picker>
+              </View>
+
+              <View style={styles.pickerColumn}>
+                <Text style={styles.pickerLabel}>Year</Text>
+                <Picker
+                  selectedValue={selectedYear}
+                  onValueChange={(itemValue) => setSelectedYear(itemValue)}
+                  style={styles.picker}
+                >
+                  {[2024, 2025, 2026, 2027, 2028].map((year) => (
+                    <Picker.Item key={year} label={String(year)} value={year} />
+                  ))}
+                </Picker>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={styles.confirmButton}
+              onPress={() => setShowPicker(false)}
+            >
+              <LinearGradient
+                colors={["#6B2F17", "#D15C2D"]}
+                style={styles.confirmButtonGradient}
+              >
+                <Text style={styles.confirmButtonText}>Done</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Book Now */}
       <View style={styles.sticky}>
@@ -147,6 +279,31 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
 
+  monthYearOverlay: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  monthYearHeaderContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+
+  arrowButton: {
+    padding: 8,
+  },
+
+  monthYearOverlayText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#6B2F17",
+  },
+
   bookedTitle: {
     fontSize: 24,
     fontWeight: "700",
@@ -194,6 +351,72 @@ const styles = StyleSheet.create({
   bookNowText: {
     color: "#fff",
     fontSize: 22,
+    fontWeight: "700",
+  },
+
+  modalContainer: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    justifyContent: "flex-end",
+  },
+
+  modalContent: {
+    backgroundColor: "#FFF9F3",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40,
+  },
+
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 24,
+  },
+
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#6B2F17",
+  },
+
+  pickerContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginBottom: 24,
+  },
+
+  pickerColumn: {
+    flex: 1,
+    alignItems: "center",
+  },
+
+  pickerLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#6B2F17",
+    marginBottom: 8,
+  },
+
+  picker: {
+    height: 200,
+    width: "100%",
+  },
+
+  confirmButton: {
+    marginTop: 16,
+  },
+
+  confirmButtonGradient: {
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+
+  confirmButtonText: {
+    color: "#fff",
+    fontSize: 16,
     fontWeight: "700",
   },
 });
