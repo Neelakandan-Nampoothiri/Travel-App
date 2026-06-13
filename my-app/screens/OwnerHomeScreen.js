@@ -76,19 +76,19 @@ export default function HomeScreen({ navigation }) {
             <View key={vehicle.id} style={styles.cardOuterShadow}>
               <View style={styles.vehicleCard}>
                 <View style={styles.vehicleCardLeft}>
-                  {vehicle.title.match(/^\d+[\s-]seater$/i) ? (
+                  {vehicle.title.match(/^\d+seater$/i) ? (
                     <>
                       <Text style={styles.vehicleTitleNum}>
                         {vehicle.title.split(/[\s-]+/)[0].toUpperCase()}
                       </Text>
 
                       <Text style={styles.vehicleTitleText}>
-                        {vehicle.title.split(/[\s-]+/)[1].toUpperCase()}
+                        {vehicle.title.split(/[\s-]+/)[1]}
                       </Text>
                     </>
                   ) : (
                     <Text style={styles.vehicleTitleText}>
-                      {vehicle.title.toUpperCase()}
+                      {vehicle.title}
                     </Text>
                   )}
 
@@ -145,6 +145,7 @@ const styles = StyleSheet.create({
     marginLeft: 24,
     marginBottom: 18,
     fontFamily: "Serpentine-Bold",
+    fontWeight: "bold",
   },
 
   logoCircleWrapper: {
@@ -193,12 +194,15 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 36,
     fontFamily: "Serpentine-Bold",
+    fontWeight: "bold",
+  
   },
 
   vehicleTitleText: {
     color: "#fff",
     fontSize: 28,
     fontFamily: "Serpentine-Bold",
+      fontWeight: "bold",
   },
 
   vehicleImage: {
