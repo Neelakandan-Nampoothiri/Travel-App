@@ -7,6 +7,8 @@ import * as Font from "expo-font";
 import SplashScreen from "./screens/SplashScreen";
 import TripDetails from "./screens/tripdetails";
 import InnovaScreen from "./screens/InnovaScreen";
+import SeventeenSeaterScreen from "./screens/SeventeenSeaterScreen";
+import ElevenSeaterScreen from "./screens/ElevenSeaterScreen";
 import OwnerHomeScreen from "./screens/OwnerHomeScreen";
 import BookingConfirmedScreen from "./screens/BookingConfirmedScreen";
 
@@ -37,8 +39,9 @@ export default function App() {
         />
         <Stack.Screen name="TripDetails" component={TripDetails} options={{ headerShown: false }} />
         <Stack.Screen name="InnovaScreen" component={InnovaScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="SeventeenSeaterScreen" component={SeventeenSeaterScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="ElevenSeaterScreen" component={ElevenSeaterScreen} options={{ headerShown: false }} />
         <Stack.Screen name="OwnerHomeScreen" component={OwnerHomeScreen} options={{ headerShown: false }} />
-      
         <Stack.Screen name="BookingConfirmedScreen" component={BookingConfirmedScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>

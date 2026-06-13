@@ -1,17 +1,17 @@
 import React from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
+  ActivityIndicator,
   Image,
   ScrollView,
+  StyleSheet,
+  Text,
   TouchableOpacity,
-  ActivityIndicator,
+  View,
 } from "react-native";
 
-import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { useFonts } from "expo-font";
+import { LinearGradient } from "expo-linear-gradient";
 
 const VEHICLES = [
   {
@@ -45,9 +45,7 @@ export default function HomeScreen({ navigation }) {
     return (
       <View style={styles.loader}>
         <ActivityIndicator size="large" color="#fff" />
-        <Text style={{ color: "#fff", marginTop: 10 }}>
-          Loading Fonts...
-        </Text>
+        <Text style={{ color: "#fff", marginTop: 10 }}>Loading Fonts...</Text>
       </View>
     );
   }
@@ -100,14 +98,16 @@ export default function HomeScreen({ navigation }) {
                       if (vehicle.title === "Innova") {
                         navigation.navigate("InnovaScreen");
                       }
+                      if (vehicle.title === "17 seater") {
+                        navigation.navigate("SeventeenSeaterScreen");
+                      }
+                      if (vehicle.title === "11 seater") {
+                        navigation.navigate("ElevenSeaterScreen");
+                      }
                     }}
                   >
                     <View style={styles.arrowCircle}>
-                      <Feather
-                        name="arrow-right"
-                        size={22}
-                        color="#B45A2B"
-                      />
+                      <Feather name="arrow-right" size={22} color="#B45A2B" />
                     </View>
                   </TouchableOpacity>
                 </View>
@@ -180,6 +180,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     height: 150,
     paddingLeft: 22,
+    overflow: "hidden",
   },
 
   vehicleCardLeft: {
@@ -203,6 +204,8 @@ const styles = StyleSheet.create({
   vehicleImage: {
     width: 170,
     height: 100,
+    margin: -10,
+    resizeMode: "contain",
   },
 
   arrowBtn: {
