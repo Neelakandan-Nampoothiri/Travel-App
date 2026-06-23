@@ -32,60 +32,59 @@ const MONTHS = [
 ];
 
 export default function ElevenSeaterScreen({ navigation }) {
-  const [selectedMonth, setSelectedMonth] = useState(0);
-  const [selectedYear, setSelectedYear] = useState(2026);
+  const today = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
+  const [selectedYear, setSelectedYear] = useState(today.getFullYear());
   const [showPicker, setShowPicker] = useState(false);
   const [bookings, setBookings] = useState([]);
   const currentDate = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}-01`;
   const minDateOfMonth = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}-01`;
   const maxDateOfMonth = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}-${new Date(selectedYear, selectedMonth + 1, 0).getDate()}`;
-useFocusEffect(
-  useCallback(() => {
-    fetchBookings();
-  }, [])
-);
 
-const fetchBookings = async () => {
+const fetchBookings = useCallback(async () => {
   const { data, error } = await supabase
     .from("vehicle_bookings")
     .select("*")
-    .eq("vehicle_type", "11-Seater") // change per screen
+    .eq("vehicle_type", "11 Seater")
     .eq("booking_status", "Confirmed");
 
   if (!error) {
     setBookings(data || []);
   }
-};
+}, []);
+
+useFocusEffect(
+  useCallback(() => {
+    fetchBookings();
+  }, [fetchBookings])
+);
 const markedDates = useMemo(() => {
   const marks = {};
 
   bookings.forEach((booking) => {
-    let current = new Date(booking.pickup_date);
-    const end = new Date(booking.return_date);
+    // Parse as UTC dates to avoid timezone off-by-one issues
+    const [startY, startM, startD] = booking.pickup_date.split("-").map(Number);
+    const [endY, endM, endD] = booking.return_date.split("-").map(Number);
+    const start = new Date(Date.UTC(startY, startM - 1, startD));
+    const end = new Date(Date.UTC(endY, endM - 1, endD));
 
-    while (current <= end) {
-      const year = current.getFullYear();
-      const month = current.getMonth();
+    for (
+      let d = new Date(start);
+      d <= end;
+      d.setUTCDate(d.getUTCDate() + 1)
+    ) {
+      const dateString =
+        d.getUTCFullYear() +
+        "-" +
+        String(d.getUTCMonth() + 1).padStart(2, "0") +
+        "-" +
+        String(d.getUTCDate()).padStart(2, "0");
 
-      if (
-        year === selectedYear &&
-        month === selectedMonth
-      ) {
-        const dateString =
-          year +
-          "-" +
-          String(month + 1).padStart(2, "0") +
-          "-" +
-          String(current.getDate()).padStart(2, "0");
-
-        marks[dateString] = {
-          selected: true,
-          selectedColor: "#B45A2B",
-          selectedTextColor: "#FFFFFF",
-        };
-      }
-
-      current.setDate(current.getDate() + 1);
+      marks[dateString] = {
+        selected: true,
+        selectedColor: "#B45A2B",
+        selectedTextColor: "#FFFFFF",
+      };
     }
   });
 
@@ -153,16 +152,24 @@ const markedDates = useMemo(() => {
             </TouchableOpacity>
           </View>
 <Calendar
+  key={currentDate}
   current={currentDate}
+  markingType={"simple"}
   markedDates={markedDates}
   hideArrows={true}
   renderHeader={() => null}
   enableSwipeMonths={false}
+  hideExtraDays={true}
   theme={{
     backgroundColor: "#F8F1E6",
     calendarBackground: "#F8F1E6",
     dayTextColor: "#6B2F17",
     todayTextColor: "#D15C2D",
+    selectedDayBackgroundColor: "#B45A2B",
+    selectedDayTextColor: "#FFFFFF",
+  }}
+  style={{
+    borderRadius: 24,
   }}
 />
         </View>
@@ -170,30 +177,31 @@ const markedDates = useMemo(() => {
         <Text style={styles.bookedTitle}>Booked Dates</Text>
 
         {bookings.map((item) => (
-          <LinearGradient
+          <TouchableOpacity
             key={item.id}
-            colors={["#D15C2D", "#D15C2D"]}
-            style={styles.bookedCard}
+            activeOpacity={0.85}
+            onPress={() =>
+              navigation.navigate("BookingDetails", { booking: item })
+            }
           >
-            <View style={{ flex: 1 }}>
+            <LinearGradient
+              colors={["#D15C2D", "#D15C2D"]}
+              style={styles.bookedCard}
+            >
               <View style={{ flex: 1 }}>
-  <Text style={styles.bookedDate}>
-    {item.customer_name}
-  </Text>
-
-  <Text style={styles.bookedRoute}>
-    {item.pickup_location} → {item.drop_location}
-  </Text>
-
-  <Text style={styles.bookedRoute}>
-    {item.pickup_date}
-  </Text>
-</View>
-            </View>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{item.booking_status}</Text>
-            </View>
-          </LinearGradient>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.bookedDate}>{item.customer_name}</Text>
+                  <Text style={styles.bookedRoute}>
+                    {item.pickup_location} → {item.drop_location}
+                  </Text>
+                  <Text style={styles.bookedRoute}>{item.pickup_date}</Text>
+                </View>
+              </View>
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{item.booking_status}</Text>
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
         ))}
       </ScrollView>
 
@@ -261,7 +269,7 @@ const markedDates = useMemo(() => {
         <TouchableOpacity
           onPress={() => {
             navigation.navigate("TripDetails", {
-  vehicle_Type: "11 Seater",
+  vehicleType: "11 Seater",
 });
           }}
         >

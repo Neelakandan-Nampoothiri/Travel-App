@@ -31,58 +31,59 @@ const MONTHS = [
 ];
 
 export default function SeventeenSeaterScreen({ navigation }) {
-  const [selectedMonth, setSelectedMonth] = useState(0);
-  const [selectedYear, setSelectedYear] = useState(2026);
+  const today = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
+  const [selectedYear, setSelectedYear] = useState(today.getFullYear());
   const [showPicker, setShowPicker] = useState(false);
 const [bookings, setBookings] = useState([]);
   const currentDate = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}-01`;
   const minDateOfMonth = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}-01`;
   const maxDateOfMonth = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}-${new Date(selectedYear, selectedMonth + 1, 0).getDate()}`;
-useFocusEffect(
-  useCallback(() => {
-    fetchBookings();
-  }, [])
-);
 
-const fetchBookings = async () => {
+const fetchBookings = useCallback(async () => {
   const { data, error } = await supabase
     .from("vehicle_bookings")
     .select("*")
-    .eq("vehicle_type", "17-Seater") // change per screen
+    .eq("vehicle_type", "17-Seater")
     .eq("booking_status", "Confirmed");
 
   if (!error) {
     setBookings(data || []);
   }
-};
+}, []);
+
+useFocusEffect(
+  useCallback(() => {
+    fetchBookings();
+  }, [fetchBookings])
+);
   const markedDates = useMemo(() => {
   const marks = {};
 
   bookings.forEach((booking) => {
-    const start = new Date(booking.pickup_date);
-    const end = new Date(booking.return_date);
+    // Parse as UTC dates to avoid timezone off-by-one issues
+    const [startY, startM, startD] = booking.pickup_date.split("-").map(Number);
+    const [endY, endM, endD] = booking.return_date.split("-").map(Number);
+    const start = new Date(Date.UTC(startY, startM - 1, startD));
+    const end = new Date(Date.UTC(endY, endM - 1, endD));
 
     for (
       let d = new Date(start);
       d <= end;
-      d.setDate(d.getDate() + 1)
+      d.setUTCDate(d.getUTCDate() + 1)
     ) {
       const dateString =
-        d.toISOString().split("T")[0];
+        d.getUTCFullYear() +
+        "-" +
+        String(d.getUTCMonth() + 1).padStart(2, "0") +
+        "-" +
+        String(d.getUTCDate()).padStart(2, "0");
 
-    marks[dateString] = {
-      disableTouchEvent: true,
-  customStyles: {
-    container: {
-      backgroundColor: "#B45A2B",
-      borderRadius: 20,
-    },
-    text: {
-      color: "#FFFFFF",
-      fontWeight: "bold",
-    },
-  },
-};
+      marks[dateString] = {
+        selected: true,
+        selectedColor: "#B45A2B",
+        selectedTextColor: "#FFFFFF",
+      };
     }
   });
 
@@ -150,20 +151,18 @@ const fetchBookings = async () => {
           </View>
 
           <Calendar
+            key={currentDate}
             current={currentDate}
-            minDate={minDateOfMonth}
-            maxDate={maxDateOfMonth}
-            markingType={"custom"}
+            markingType={"simple"}
             markedDates={markedDates}
             enableSwipeMonths={false}
-            hideExtraDays={false}
+            hideExtraDays={true}
             hideArrows={true}
             renderHeader={() => null}
             theme={{
               backgroundColor: "#F8F1E6",
               calendarBackground: "#F8F1E6",
               dayTextColor: "#6B2F17",
-              textDisabledColor: "#6B2F17",
               todayTextColor: "#D15C2D",
               selectedDayBackgroundColor: "#B45A2B",
               selectedDayTextColor: "#FFFFFF",
@@ -177,31 +176,31 @@ const fetchBookings = async () => {
         <Text style={styles.bookedTitle}>Booked Dates</Text>
 
         {bookings.map((item) => (
-          
-          <LinearGradient
+          <TouchableOpacity
             key={item.id}
-            colors={["#D15C2D", "#D15C2D"]}
-            style={styles.bookedCard}
+            activeOpacity={0.85}
+            onPress={() =>
+              navigation.navigate("BookingDetails", { booking: item })
+            }
           >
-            <View style={{ flex: 1 }}>
-            <View style={{ flex: 1 }}>
-  <Text style={styles.bookedDate}>
-    {item.customer_name}
-  </Text>
-
-  <Text style={styles.bookedRoute}>
-    {item.pickup_location} → {item.drop_location}
-  </Text>
-
-  <Text style={styles.bookedRoute}>
-    {item.pickup_date}
-  </Text>
-</View>
-            </View>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{item.booking_status}</Text>
-            </View>
-          </LinearGradient>
+            <LinearGradient
+              colors={["#D15C2D", "#D15C2D"]}
+              style={styles.bookedCard}
+            >
+              <View style={{ flex: 1 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.bookedDate}>{item.customer_name}</Text>
+                  <Text style={styles.bookedRoute}>
+                    {item.pickup_location} → {item.drop_location}
+                  </Text>
+                  <Text style={styles.bookedRoute}>{item.pickup_date}</Text>
+                </View>
+              </View>
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{item.booking_status}</Text>
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
         ))}
       </ScrollView>
 

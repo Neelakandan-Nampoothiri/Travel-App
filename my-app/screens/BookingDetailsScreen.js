@@ -22,36 +22,48 @@ import {
 } from "react-native";
 
 export default function App({ navigation, route }) {
-const booking = route?.params?.booking;
+const booking = route?.params?.booking || {};
 
 const [owner, setOwner] =
-  useState(booking.owner_name);
+  useState(booking.owner_name || "");
 
 const [customerName, setCustomerName] =
-  useState(booking.customer_name);
+  useState(booking.customer_name || "");
 
 const [mobile, setMobile] =
-  useState(booking.phone_number);
+  useState(booking.phone_number || "");
 
 const [address, setAddress] =
-  useState(booking.address);
+  useState(booking.address || "");
 
 const [fromLocation, setFromLocation] =
-  useState(booking.pickup_location);
+  useState(booking.pickup_location || "");
 
 const [toLocation, setToLocation] =
-  useState(booking.drop_location);
+  useState(booking.drop_location || "");
+
+// Parse date strings as LOCAL midnight to avoid UTC timezone shift
+// (new Date("YYYY-MM-DD") = UTC midnight → shows previous day in IST UTC+5:30)
+const parseLocalDate = (dateStr) => {
+  if (!dateStr) return new Date();
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m-1, d); // local midnight — no timezone shift
+};
 
 const [tripBeginDate, setTripBeginDate] =
-  useState(new Date(booking.pickup_date));
+  useState(parseLocalDate(booking.pickup_date));
 
 const [tripEndDate, setTripEndDate] =
-  useState(new Date(booking.return_date));
-  const vehicleType =
-  route?.params?.vehicleType || "";
+  useState(parseLocalDate(booking.return_date));
 
-  
+
+  const vehicleType =
+  route?.params?.vehicleType || booking.vehicle_type || "";
+
+  const [showBeginDatePicker, setShowBeginDatePicker] = useState(false);
+  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
   const [showBookingDialog, setShowBookingDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const handleConfirm = async () => {
     // Validate all fields
@@ -141,6 +153,28 @@ if (error) {
   return;
 }
     setShowBookingDialog(true);
+  };
+
+  const handleDelete = async () => {
+    if (!booking.id) {
+      Alert.alert("Error", "Booking ID is missing. Cannot delete.");
+      return;
+    }
+
+    // Soft-delete: mark as Cancelled so the fetch queries
+    // (which filter by booking_status = "Confirmed") exclude this booking.
+    // This uses the same UPDATE permission that Save Changes relies on.
+    const { error } = await supabase
+      .from("vehicle_bookings")
+      .update({ booking_status: "Cancelled" })
+      .eq("id", booking.id);
+
+    if (error) {
+      Alert.alert("Delete Failed", error.message);
+      return;
+    }
+    setShowDeleteDialog(false);
+    navigation.goBack();
   };
 
   const showAndroidDateTimePicker = (type) => {
@@ -337,47 +371,38 @@ if (error) {
           />
         )}
 
-        {/* Confirm Button */}
-        <TouchableOpacity
-  style={styles.buttonWrapper}
-  onPress={handleConfirm}
->
-  <LinearGradient
-    colors={["#6B2F17", "#D15C2D"]}
-    style={styles.button}
-  >
-    <Text style={styles.buttonText}>
-      Save Changes
-    </Text>
-  </LinearGradient>
-</TouchableOpacity>
+        {/* Action Buttons Row */}
+        <View style={styles.actionRow}>
+          {/* Save Changes */}
+          <TouchableOpacity
+            style={styles.saveButtonWrapper}
+            onPress={handleConfirm}
+          >
+            <LinearGradient
+              colors={["#6B2F17", "#D15C2D"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.actionButton}
+            >
+           
+              <Text style={styles.buttonText}>Update</Text>
+            </LinearGradient>
+          </TouchableOpacity>
 
-<TouchableOpacity
-  onPress={async () => {
-    const { error } = await supabase
-      .from("vehicle_bookings")
-      .delete()
-      .eq("id", booking.id);
-
-    if (!error) {
-      navigation.goBack();
-    }
-  }}
->
-  <Text
-    style={{
-      color: "red",
-      textAlign: "center",
-      marginBottom: 30,
-      fontSize: 16,
-    }}
-  >
-    Delete Booking
-  </Text>
-</TouchableOpacity>
+          {/* Delete Booking */}
+          <TouchableOpacity
+            style={styles.deleteButtonWrapper}
+            onPress={() => setShowDeleteDialog(true)}
+          >
+            <View style={styles.deleteButton}>
+            
+              <Text style={styles.deleteButtonText}>Cancel Booking</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
 
-      {/* Modal */}
+      {/* Save Success Modal */}
       <Modal
         visible={showBookingDialog}
         transparent
@@ -407,9 +432,54 @@ if (error) {
                 end={{ x: 1, y: 0 }}
                 style={styles.button}
               >
-                <Text style={styles.buttonText}>Go to Home Page</Text>
+                <Text style={styles.buttonText}>Go Back</Text>
               </LinearGradient>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        visible={showDeleteDialog}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowDeleteDialog(false)}
+      >
+        <View style={styles.modalContainer}>
+          <BlurView intensity={100} tint="dark" style={styles.modalBlur} />
+          <View style={styles.dialogBox}>
+            {/* Trash icon circle */}
+            
+            
+            
+            <Text style={styles.deleteDialogTitle}>Cancel Booking</Text>
+            <Text style={styles.deleteDialogSubtitle}>
+              Are you sure you want to cancel this booking?
+            </Text>
+            {/* Buttons */}
+            <View style={styles.deleteDialogButtons}>
+              <TouchableOpacity
+                style={styles.cancelBtn}
+                onPress={() => setShowDeleteDialog(false)}
+              >
+                <Text style={styles.cancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.confirmDeleteBtnWrapper}
+                onPress={handleDelete}
+              >
+                <LinearGradient
+                  colors={["#6B2F17", "#D15C2D"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.confirmDeleteBtn}
+                >
+                  
+                  <Text style={styles.confirmDeleteText}>Confirm</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -513,8 +583,47 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  buttonText: { color: "#fff", fontSize: 18, fontWeight: "600" },
+  buttonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
 
+  /* Side-by-side action row */
+  actionRow: {
+    flexDirection: "row",
+    marginHorizontal: 20,
+    marginTop: 30,
+    marginBottom: 36,
+    gap: 12,
+  },
+
+  saveButtonWrapper: { flex: 1 },
+
+  actionButton: {
+    borderRadius: 16,
+    paddingVertical: 15,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  deleteButtonWrapper: { flex: 1 },
+
+  deleteButton: {
+    borderRadius: 16,
+    paddingVertical: 15,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+backgroundColor: "#fcf9f3ff",
+    borderWidth: 1,
+    borderColor: "#D15C2D",
+  },
+
+  deleteButtonText: {
+    color: "#D15C2D",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+
+  /* Modals */
   modalContainer: {
     flex: 1,
     justifyContent: "center",
@@ -524,21 +633,80 @@ const styles = StyleSheet.create({
   modalBlur: { ...StyleSheet.absoluteFillObject },
 
   dialogBox: {
-    width: "80%",
+    width: "85%",
     backgroundColor: "#F9F7F2",
-    borderRadius: 40,
+    borderRadius: 32,
     alignItems: "center",
-    padding: 24,
+    padding: 28,
     elevation: 8,
   },
 
   checkImage: { width: 84, height: 84, top: -66 },
 
+  tickCircle: {},
+
   confirmedText: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: "bold",
+    color: "#6B2F17",
     marginTop: -34,
-    paddingBottom: 16,
+    paddingBottom: 12,
+    marginBottom: 20,
+  },
+
+
+  deleteDialogTitle: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#6B2F17",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+
+  deleteDialogSubtitle: {
+    fontSize: 15,
+    color: "#888",
+    textAlign: "center",
+    lineHeight: 22,
     marginBottom: 24,
+  },
+
+  deleteDialogButtons: {
+    flexDirection: "row",
+    gap: 12,
+    width: "100%",
+  },
+
+  cancelBtn: {
+    flex: 1,
+    borderRadius: 14,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor:"#D15C2D",
+    backgroundColor: "#fcf9f3ff",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  cancelBtnText: {
+    color: "#D15C2D",
+    fontSize: 15,
+    fontWeight: "600",
+  },
+
+  confirmDeleteBtnWrapper: { flex: 1 },
+
+  confirmDeleteBtn: {
+    borderRadius: 14,
+    paddingVertical: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  confirmDeleteText: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "700",
   },
 });
