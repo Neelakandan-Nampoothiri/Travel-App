@@ -1,20 +1,24 @@
-import { supabase } from "../lib/supabase";
-import { useFocusEffect } from "@react-navigation/native";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-
 import { Feather } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
 import { LinearGradient } from "expo-linear-gradient";
-
+import { useMemo, useState } from "react";
 import {
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { Calendar } from "react-native-calendars";
+
+const BOOKED_DATES = [
+  { id: 1, date: "2026-01-08", label: "Wed, January 8", route: "TVM - KTYM" },
+  { id: 2, date: "2026-01-09", label: "Thu, January 9", route: "KYKM - CHN" },
+  { id: 3, date: "2026-01-20", label: "Tue, January 20", route: "KYKM - CHN" },
+  { id: 4, date: "2026-01-24", label: "Sat, January 24", route: "KYKM - CHN" },
+  { id: 5, date: "2026-01-28", label: "Thu, January 28", route: "KYKM - CHN" },
+];
 
 const MONTHS = [
   "January",
@@ -32,65 +36,28 @@ const MONTHS = [
 ];
 
 export default function ElevenSeaterScreen({ navigation }) {
-  const today = new Date();
-  const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
-  const [selectedYear, setSelectedYear] = useState(today.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(0);
+  const [selectedYear, setSelectedYear] = useState(2026);
   const [showPicker, setShowPicker] = useState(false);
-  const [bookings, setBookings] = useState([]);
+
   const currentDate = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}-01`;
   const minDateOfMonth = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}-01`;
   const maxDateOfMonth = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}-${new Date(selectedYear, selectedMonth + 1, 0).getDate()}`;
 
-const fetchBookings = useCallback(async () => {
-  const { data, error } = await supabase
-    .from("vehicle_bookings")
-    .select("*")
-    .eq("vehicle_type", "11 Seater")
-    .eq("booking_status", "Confirmed");
+  const markedDates = useMemo(() => {
+    const marks = {};
 
-  if (!error) {
-    setBookings(data || []);
-  }
-}, []);
-
-useFocusEffect(
-  useCallback(() => {
-    fetchBookings();
-  }, [fetchBookings])
-);
-const markedDates = useMemo(() => {
-  const marks = {};
-
-  bookings.forEach((booking) => {
-    // Parse as UTC dates to avoid timezone off-by-one issues
-    const [startY, startM, startD] = booking.pickup_date.split("-").map(Number);
-    const [endY, endM, endD] = booking.return_date.split("-").map(Number);
-    const start = new Date(Date.UTC(startY, startM - 1, startD));
-    const end = new Date(Date.UTC(endY, endM - 1, endD));
-
-    for (
-      let d = new Date(start);
-      d <= end;
-      d.setUTCDate(d.getUTCDate() + 1)
-    ) {
-      const dateString =
-        d.getUTCFullYear() +
-        "-" +
-        String(d.getUTCMonth() + 1).padStart(2, "0") +
-        "-" +
-        String(d.getUTCDate()).padStart(2, "0");
-
-      marks[dateString] = {
+    BOOKED_DATES.forEach((item) => {
+      marks[item.date] = {
         selected: true,
         selectedColor: "#B45A2B",
         selectedTextColor: "#FFFFFF",
+        disableTouchEvent: true,
       };
-    }
-  });
+    });
 
-  return marks;
-}, [bookings, selectedMonth, selectedYear]);
-
+    return marks;
+  }, []);
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -151,57 +118,50 @@ const markedDates = useMemo(() => {
               <Feather name="chevron-right" size={24} color="#D15C2D" />
             </TouchableOpacity>
           </View>
-<Calendar
-  key={currentDate}
-  current={currentDate}
-  markingType={"simple"}
-  markedDates={markedDates}
-  hideArrows={true}
-  renderHeader={() => null}
-  enableSwipeMonths={false}
-  hideExtraDays={true}
-  theme={{
-    backgroundColor: "#F8F1E6",
-    calendarBackground: "#F8F1E6",
-    dayTextColor: "#6B2F17",
-    todayTextColor: "#D15C2D",
-    selectedDayBackgroundColor: "#B45A2B",
-    selectedDayTextColor: "#FFFFFF",
-  }}
-  style={{
-    borderRadius: 24,
-  }}
-/>
+
+          <Calendar
+            current={currentDate}
+            minDate={minDateOfMonth}
+            maxDate={maxDateOfMonth}
+            markedDates={markedDates}
+            enableSwipeMonths={false}
+            hideExtraDays={false}
+            hideArrows={true}
+            renderHeader={() => null}
+            theme={{
+              backgroundColor: "#F8F1E6",
+              calendarBackground: "#F8F1E6",
+
+              dayTextColor: "#6B2F17",
+              textDisabledColor: "#6B2F17",
+
+              todayTextColor: "#D15C2D",
+
+              selectedDayBackgroundColor: "#B45A2B",
+              selectedDayTextColor: "#FFFFFF",
+            }}
+            style={{
+              borderRadius: 24,
+            }}
+          />
         </View>
 
         <Text style={styles.bookedTitle}>Booked Dates</Text>
 
-        {bookings.map((item) => (
-          <TouchableOpacity
+        {BOOKED_DATES.map((item) => (
+          <LinearGradient
             key={item.id}
-            activeOpacity={0.85}
-            onPress={() =>
-              navigation.navigate("BookingDetails", { booking: item })
-            }
+            colors={["#D15C2D", "#D15C2D"]}
+            style={styles.bookedCard}
           >
-            <LinearGradient
-              colors={["#D15C2D", "#D15C2D"]}
-              style={styles.bookedCard}
-            >
-              <View style={{ flex: 1 }}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.bookedDate}>{item.customer_name}</Text>
-                  <Text style={styles.bookedRoute}>
-                    {item.pickup_location} → {item.drop_location}
-                  </Text>
-                  <Text style={styles.bookedRoute}>{item.pickup_date}</Text>
-                </View>
-              </View>
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{item.booking_status}</Text>
-              </View>
-            </LinearGradient>
-          </TouchableOpacity>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.bookedDate}>{item.label}</Text>
+              <Text style={styles.bookedRoute}>{item.route}</Text>
+            </View>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>Booked</Text>
+            </View>
+          </LinearGradient>
         ))}
       </ScrollView>
 
@@ -242,7 +202,7 @@ const markedDates = useMemo(() => {
                   onValueChange={(itemValue) => setSelectedYear(itemValue)}
                   style={styles.picker}
                 >
-                  {[2026, 2027, 2028, 2029, 2030].map((year) => (
+                  {[2024, 2025, 2026, 2027, 2028].map((year) => (
                     <Picker.Item key={year} label={String(year)} value={year} />
                   ))}
                 </Picker>
@@ -268,9 +228,7 @@ const markedDates = useMemo(() => {
       <View style={styles.sticky}>
         <TouchableOpacity
           onPress={() => {
-            navigation.navigate("TripDetails", {
-  vehicleType: "11 Seater",
-});
+            navigation.navigate("TripDetails");
           }}
         >
           <LinearGradient

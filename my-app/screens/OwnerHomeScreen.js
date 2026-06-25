@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   ScrollView,
   StyleSheet,
@@ -13,7 +12,6 @@ import {
 import { Feather } from "@expo/vector-icons";
 import { useFonts } from "expo-font";
 import { LinearGradient } from "expo-linear-gradient";
-import { supabase } from "../lib/supabase";
 
 const VEHICLES = [
   {
@@ -33,49 +31,10 @@ const VEHICLES = [
   },
 ];
 
-export default function HomeScreen({ navigation, route }) {
+export default function HomeScreen({ navigation }) {
   const [fontsLoaded, fontError] = useFonts({
     "Serpentine-Bold": require("../assets/Serpentine-Bold.ttf"),
   });
-
-  const [ownerName, setOwnerName] = useState("OWNER");
-  const [loggingOut, setLoggingOut] = useState(false);
-
-  useEffect(() => {
-    // Get the owner name from session
-    const fetchOwner = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user) {
-        // Use display name if set, otherwise extract first part of email
-       const emailPrefix = user.email?.split("@")[0] || "";
-const name = emailPrefix.replace("travelapp", "");
-
-setOwnerName(
-  name.charAt(0).toUpperCase() + name.slice(1)
-);
-        
-      }
-    };
-    fetchOwner();
-  }, []);
-
-  const handleLogout = () => {
-    Alert.alert("Logout", "Are you sure you want to logout?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Logout",
-        style: "destructive",
-        onPress: async () => {
-          setLoggingOut(true);
-          await supabase.auth.signOut();
-          setLoggingOut(false);
-          navigation.replace("Login");
-        },
-      },
-    ]);
-  };
 
   React.useEffect(() => {
     console.log("Fonts Loaded:", fontsLoaded);
@@ -86,7 +45,9 @@ setOwnerName(
     return (
       <View style={styles.loader}>
         <ActivityIndicator size="large" color="#fff" />
-        <Text style={{ color: "#fff", marginTop: 10 }}>Loading Fonts...</Text>
+        <Text style={{ color: "#fff", marginTop: 10 }}>
+          Loading Fonts...
+        </Text>
       </View>
     );
   }
@@ -100,25 +61,7 @@ setOwnerName(
         contentContainerStyle={{ paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header row: greeting + logout */}
-        <View style={styles.headerRow}>
-          <Text style={styles.greeting}>HI, {ownerName} !</Text>
-          <TouchableOpacity
-            style={styles.logoutBtn}
-            onPress={handleLogout}
-            activeOpacity={0.8}
-            disabled={loggingOut}
-          >
-            {loggingOut ? (
-              <ActivityIndicator size="small" color="#D15C2D" />
-            ) : (
-              <>
-                <Feather name="log-out" size={16} color="#D15C2D" />
-                <Text style={styles.logoutText}>Logout</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.greeting}>HI, OWNER !</Text>
 
         <View style={styles.logoCircleWrapper}>
           <Image
@@ -132,37 +75,22 @@ setOwnerName(
 
         <View style={styles.cardsBgWrapper}>
           {VEHICLES.map((vehicle) => (
-            <TouchableOpacity
-              key={vehicle.id}
-              style={styles.cardOuterShadow}
-              activeOpacity={0.85}
-              onPress={() => {
-                if (vehicle.title === "Innova") {
-                  navigation.navigate("InnovaScreen");
-                }
-                if (vehicle.title === "17 seater") {
-                  navigation.navigate("SeventeenSeaterScreen");
-                }
-                if (vehicle.title === "11 seater") {
-                  navigation.navigate("ElevenSeaterScreen");
-                }
-              }}
-            >
+            <View key={vehicle.id} style={styles.cardOuterShadow}>
               <View style={styles.vehicleCard}>
                 <View style={styles.vehicleCardLeft}>
-                  {vehicle.title.match(/^\d+seater$/i) ? (
+                  {vehicle.title.match(/^\d+[\s-]seater$/i) ? (
                     <>
                       <Text style={styles.vehicleTitleNum}>
                         {vehicle.title.split(/[\s-]+/)[0].toUpperCase()}
                       </Text>
 
                       <Text style={styles.vehicleTitleText}>
-                        {vehicle.title.split(/[\s-]+/)[1]}
+                        {vehicle.title.split(/[\s-]+/)[1].toUpperCase()}
                       </Text>
                     </>
                   ) : (
                     <Text style={styles.vehicleTitleText}>
-                      {vehicle.title}
+                      {vehicle.title.toUpperCase()}
                     </Text>
                   )}
 
@@ -172,16 +100,14 @@ setOwnerName(
                       if (vehicle.title === "Innova") {
                         navigation.navigate("InnovaScreen");
                       }
-                      if (vehicle.title === "17 seater") {
-                        navigation.navigate("SeventeenSeaterScreen");
-                      }
-                      if (vehicle.title === "11 seater") {
-                        navigation.navigate("ElevenSeaterScreen");
-                      }
                     }}
                   >
                     <View style={styles.arrowCircle}>
-                      <Feather name="arrow-right" size={22} color="#B45A2B" />
+                      <Feather
+                        name="arrow-right"
+                        size={22}
+                        color="#B45A2B"
+                      />
                     </View>
                   </TouchableOpacity>
                 </View>
@@ -192,7 +118,7 @@ setOwnerName(
                   resizeMode="contain"
                 />
               </View>
-            </TouchableOpacity>
+            </View>
           ))}
         </View>
       </ScrollView>
@@ -212,41 +138,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#6B2F17",
   },
 
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 48,
-    marginHorizontal: 24,
-    marginBottom: 18,
-  },
-
   greeting: {
     color: "#fff",
     fontSize: 32,
+    marginTop: 38,
+    marginLeft: 24,
+    marginBottom: 18,
     fontFamily: "Serpentine-Bold",
-    fontWeight: "bold",
-  },
-
-  logoutBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFF8F3",
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    gap: 6,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-
-  logoutText: {
-    color: "#D15C2D",
-    fontSize: 13,
-    fontWeight: "600",
   },
 
   logoCircleWrapper: {
@@ -282,7 +180,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     height: 150,
     paddingLeft: 22,
-    overflow: "hidden",
+    paddingRight: 10,
+    overflow: 'hidden',
   },
 
   vehicleCardLeft: {
@@ -295,21 +194,19 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 36,
     fontFamily: "Serpentine-Bold",
-    fontWeight: "bold",
   },
 
   vehicleTitleText: {
     color: "#fff",
     fontSize: 28,
     fontFamily: "Serpentine-Bold",
-    fontWeight: "bold",
   },
 
   vehicleImage: {
-    width: 170,
-    height: 100,
-    margin: -10,
-    resizeMode: "contain",
+    width: 140,
+    height: 90,
+    resizeMode: 'contain',
+    margin:-11
   },
 
   arrowBtn: {
