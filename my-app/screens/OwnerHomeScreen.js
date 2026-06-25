@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Image,
   ScrollView,
   StyleSheet,
@@ -12,6 +13,7 @@ import {
 import { Feather } from "@expo/vector-icons";
 import { useFonts } from "expo-font";
 import { LinearGradient } from "expo-linear-gradient";
+import { supabase } from "../lib/supabase";
 
 const VEHICLES = [
   {
@@ -31,10 +33,49 @@ const VEHICLES = [
   },
 ];
 
-export default function HomeScreen({ navigation }) {
+export default function HomeScreen({ navigation, route }) {
   const [fontsLoaded, fontError] = useFonts({
     "Serpentine-Bold": require("../assets/Serpentine-Bold.ttf"),
   });
+
+  const [ownerName, setOwnerName] = useState("OWNER");
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  useEffect(() => {
+    // Get the owner name from session
+    const fetchOwner = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        // Use display name if set, otherwise extract first part of email
+       const emailPrefix = user.email?.split("@")[0] || "";
+const name = emailPrefix.replace("travelapp", "");
+
+setOwnerName(
+  name.charAt(0).toUpperCase() + name.slice(1)
+);
+        
+      }
+    };
+    fetchOwner();
+  }, []);
+
+  const handleLogout = () => {
+    Alert.alert("Logout", "Are you sure you want to logout?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Logout",
+        style: "destructive",
+        onPress: async () => {
+          setLoggingOut(true);
+          await supabase.auth.signOut();
+          setLoggingOut(false);
+          navigation.replace("Login");
+        },
+      },
+    ]);
+  };
 
   React.useEffect(() => {
     console.log("Fonts Loaded:", fontsLoaded);
@@ -59,7 +100,25 @@ export default function HomeScreen({ navigation }) {
         contentContainerStyle={{ paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.greeting}>HI, OWNER !</Text>
+        {/* Header row: greeting + logout */}
+        <View style={styles.headerRow}>
+          <Text style={styles.greeting}>HI, {ownerName} !</Text>
+          <TouchableOpacity
+            style={styles.logoutBtn}
+            onPress={handleLogout}
+            activeOpacity={0.8}
+            disabled={loggingOut}
+          >
+            {loggingOut ? (
+              <ActivityIndicator size="small" color="#D15C2D" />
+            ) : (
+              <>
+                <Feather name="log-out" size={16} color="#D15C2D" />
+                <Text style={styles.logoutText}>Logout</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.logoCircleWrapper}>
           <Image
@@ -74,25 +133,22 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.cardsBgWrapper}>
           {VEHICLES.map((vehicle) => (
             <TouchableOpacity
-  key={vehicle.id}
-  style={styles.cardOuterShadow}
-  activeOpacity={0.85}
-  onPress={() => {
-    if (vehicle.title === "Innova") {
-      navigation.navigate("InnovaScreen");
-    }
-
-    if (vehicle.title === "17 seater") {
-      navigation.navigate("SeventeenSeaterScreen");
-    }
-
-    if (vehicle.title === "11 seater") {
-      navigation.navigate("ElevenSeaterScreen");
-    }
-  }}
->
-  <View style={styles.vehicleCard}>
-
+              key={vehicle.id}
+              style={styles.cardOuterShadow}
+              activeOpacity={0.85}
+              onPress={() => {
+                if (vehicle.title === "Innova") {
+                  navigation.navigate("InnovaScreen");
+                }
+                if (vehicle.title === "17 seater") {
+                  navigation.navigate("SeventeenSeaterScreen");
+                }
+                if (vehicle.title === "11 seater") {
+                  navigation.navigate("ElevenSeaterScreen");
+                }
+              }}
+            >
+              <View style={styles.vehicleCard}>
                 <View style={styles.vehicleCardLeft}>
                   {vehicle.title.match(/^\d+seater$/i) ? (
                     <>
@@ -136,7 +192,7 @@ export default function HomeScreen({ navigation }) {
                   resizeMode="contain"
                 />
               </View>
-</TouchableOpacity>
+            </TouchableOpacity>
           ))}
         </View>
       </ScrollView>
@@ -156,14 +212,41 @@ const styles = StyleSheet.create({
     backgroundColor: "#6B2F17",
   },
 
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 48,
+    marginHorizontal: 24,
+    marginBottom: 18,
+  },
+
   greeting: {
     color: "#fff",
     fontSize: 32,
-    marginTop: 38,
-    marginLeft: 24,
-    marginBottom: 18,
     fontFamily: "Serpentine-Bold",
     fontWeight: "bold",
+  },
+
+  logoutBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFF8F3",
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    gap: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+
+  logoutText: {
+    color: "#D15C2D",
+    fontSize: 13,
+    fontWeight: "600",
   },
 
   logoCircleWrapper: {
@@ -213,14 +296,13 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontFamily: "Serpentine-Bold",
     fontWeight: "bold",
-  
   },
 
   vehicleTitleText: {
     color: "#fff",
     fontSize: 28,
     fontFamily: "Serpentine-Bold",
-      fontWeight: "bold",
+    fontWeight: "bold",
   },
 
   vehicleImage: {

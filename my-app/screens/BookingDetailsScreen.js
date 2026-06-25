@@ -44,17 +44,44 @@ const [toLocation, setToLocation] =
 
 // Parse date strings as LOCAL midnight to avoid UTC timezone shift
 // (new Date("YYYY-MM-DD") = UTC midnight → shows previous day in IST UTC+5:30)
-const parseLocalDate = (dateStr) => {
+const parseLocalDateTime = (dateStr, timeStr) => {
   if (!dateStr) return new Date();
-  const [y, m, d] = dateStr.split("-").map(Number);
-  return new Date(y, m-1, d); // local midnight — no timezone shift
-};
 
+  const [y, m, d] = dateStr.split("-").map(Number);
+
+  let hours = 0;
+  let minutes = 0;
+
+  if (timeStr) {
+    const [h, min] = timeStr.split(":").map(Number);
+    hours = h || 0;
+    minutes = min || 0;
+  }
+
+  return new Date(y, m - 1, d, hours, minutes);
+};
+const formatLocalDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
 const [tripBeginDate, setTripBeginDate] =
-  useState(parseLocalDate(booking.pickup_date));
+  useState(
+    parseLocalDateTime(
+      booking.pickup_date,
+      booking.pickup_time
+    )
+  );
 
 const [tripEndDate, setTripEndDate] =
-  useState(parseLocalDate(booking.return_date));
+  useState(
+    parseLocalDateTime(
+      booking.return_date,
+      booking.return_time
+    )
+  );
 
 
   const vehicleType =
@@ -100,8 +127,8 @@ const [tripEndDate, setTripEndDate] =
       return;
     }
 // Check if vehicle already booked for selected dates
-const startDate = tripBeginDate.toISOString().split("T")[0];
-const endDate = tripEndDate.toISOString().split("T")[0];
+const startDate = formatLocalDate(tripBeginDate);
+const endDate = formatLocalDate(tripEndDate);
 
 const { data: existingBookings, error: checkError } = await supabase
   .from("vehicle_bookings")
@@ -134,18 +161,29 @@ if (hasConflict) {
 }
 const { error } = await supabase
   .from("vehicle_bookings")
-  .update({
-    owner_name: owner,
-    customer_name: customerName,
-    phone_number: mobile,
-    address: address,
-    pickup_location: fromLocation,
-    drop_location: toLocation,
-    pickup_date:
-      tripBeginDate.toISOString().split("T")[0],
-    return_date:
-      tripEndDate.toISOString().split("T")[0],
-  })
+.update({
+  owner_name: owner,
+  customer_name: customerName,
+  phone_number: mobile,
+  address: address,
+  pickup_location: fromLocation,
+  drop_location: toLocation,
+
+  pickup_date: formatLocalDate(tripBeginDate),
+  return_date: formatLocalDate(tripEndDate),
+
+  pickup_time: tripBeginDate.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }),
+
+  return_time: tripEndDate.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }),
+})
   .eq("id", booking.id);
 
 if (error) {

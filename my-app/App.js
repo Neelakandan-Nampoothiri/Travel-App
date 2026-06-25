@@ -4,14 +4,15 @@ import * as Font from "expo-font";
 import { useFonts } from "expo-font";
 import { useEffect } from "react";
 import BookingConfirmedScreen from "./screens/BookingConfirmedScreen";
+import BookingDetailsScreen from "./screens/BookingDetailsScreen";
 import ElevenSeaterScreen from "./screens/ElevenSeaterScreen";
 import InnovaScreen from "./screens/InnovaScreen";
+import LoginScreen from "./screens/LoginScreen";
 import OwnerHomeScreen from "./screens/OwnerHomeScreen";
 import SeventeenSeaterScreen from "./screens/SeventeenSeaterScreen";
 import SplashScreen from "./screens/SplashScreen";
 import TripDetails from "./screens/tripdetails";
-import BookingDetailsScreen
-from "./screens/BookingDetailsScreen";
+
 const Stack = createNativeStackNavigator();
 
 export default function App() {
@@ -41,6 +42,16 @@ export default function App() {
           options={{ headerShown: false }}
         />
         <Stack.Screen
+          name="Login"
+          component={LoginScreen}
+          options={{ headerShown: false, animation: "fade" }}
+        />
+        <Stack.Screen
+          name="OwnerHomeScreen"
+          component={OwnerHomeScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
           name="TripDetails"
           component={TripDetails}
           options={{ headerShown: false }}
@@ -61,20 +72,15 @@ export default function App() {
           options={{ headerShown: false }}
         />
         <Stack.Screen
-          name="OwnerHomeScreen"
-          component={OwnerHomeScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
           name="BookingConfirmedScreen"
           component={BookingConfirmedScreen}
           options={{ headerShown: false }}
         />
         <Stack.Screen
-  name="BookingDetails"
-  component={BookingDetailsScreen}
-  options={{ headerShown: false }}
-/>
+          name="BookingDetails"
+          component={BookingDetailsScreen}
+          options={{ headerShown: false }}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

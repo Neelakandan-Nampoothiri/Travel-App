@@ -36,7 +36,13 @@ export default function App({ navigation, route }) {
   const [tripBeginDate, setTripBeginDate] = useState(null);
   const [tripEndDate, setTripEndDate] = useState(null);
   const [showBookingDialog, setShowBookingDialog] = useState(false);
+const formatLocalDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
 
+  return `${year}-${month}-${day}`;
+};
   const handleConfirm = async () => {
     // Validate all fields
     if (!owner.trim()) {
@@ -72,8 +78,8 @@ export default function App({ navigation, route }) {
       return;
     }
 // Check if vehicle already booked for selected dates
-const startDate = tripBeginDate.toISOString().split("T")[0];
-const endDate = tripEndDate.toISOString().split("T")[0];
+const startDate = formatLocalDate(tripBeginDate);
+const endDate = formatLocalDate(tripEndDate);
 
 const { data: existingBookings, error: checkError } = await supabase
   .from("vehicle_bookings")
@@ -103,24 +109,46 @@ if (hasConflict) {
   );
   return;
 }
-const { error } = await supabase
+console.log("PICKUP TIME:", tripBeginDate);
+console.log("RETURN TIME:", tripEndDate);
+
+console.log(
+  tripEndDate.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  })
+);
+const { data, error } = await supabase
   .from("vehicle_bookings")
   .insert([
     {
-      vehicle_type:  vehicleType,
+      vehicle_type: vehicleType,
       owner_name: owner,
       customer_name: customerName,
       phone_number: mobile,
       address: address,
       pickup_location: fromLocation,
       drop_location: toLocation,
-      pickup_date: tripBeginDate.toISOString().split("T")[0],
-      return_date: tripEndDate.toISOString().split("T")[0],
-      pickup_time: tripBeginDate.toLocaleTimeString(),
+
+      pickup_date: formatLocalDate(tripBeginDate),
+      return_date: formatLocalDate(tripEndDate),
+
+      pickup_time: tripBeginDate.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+
+      return_time: tripEndDate.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+
       booking_status: "Confirmed",
     },
-  ]);
+  ])
+  .select();
 
+console.log("INSERTED DATA:", data);
 if (error) {
   Alert.alert("Booking Failed", error.message);
   return;
